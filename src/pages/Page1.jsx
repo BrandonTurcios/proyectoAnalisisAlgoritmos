@@ -14,26 +14,27 @@ const Page1 = () => {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]); 
   const [nodeId, setNodeId] = useState(1);
   const [clique, setClique] = useState([]);
+  const [history, setHistory] = useState([]); 
 
-  
   const addNode = () => {
     const newNode = {
       id: `${nodeId}`,
       data: { label: `Nodo ${nodeId}` }, 
-      position: { x: Math.random() * 400, y: Math.random() * 400 },
+      position: { x: Math.random() * 20, y: Math.random() * 20 },
     };
+
+    setHistory((prevHistory) => [...prevHistory, { nodes, edges }]); 
     setNodes((prevNodes) => [...prevNodes, newNode]);
     setNodeId(nodeId + 1);
+
     notification.success({
       message: "Nodo agregado",
       description: `Nodo ${nodeId} agregado correctamente.`,
     });
   };
 
-  
   const onConnect = useCallback(
     (params) => {
-      
       const edgeExists = edges.some(
         (edge) =>
           (edge.source === params.source && edge.target === params.target) ||
@@ -48,13 +49,15 @@ const Page1 = () => {
         return;
       }
 
+      setHistory((prevHistory) => [...prevHistory, { nodes, edges }]); 
       setEdges((prevEdges) => addEdge(params, prevEdges));
+
       notification.success({
         message: "Arista agregada",
         description: `Conexión establecida entre ${params.source} y ${params.target}.`,
       });
     },
-    [edges]
+    [edges, nodes]
   );
 
   const isClique = (subset, adjacencyList) => {
@@ -113,14 +116,42 @@ const Page1 = () => {
     });
   };
 
+  // Deshacer la última acción
+  const undo = () => {
+    if (history.length > 0) {
+      const lastState = history[history.length - 1];
+      setNodes(lastState.nodes);
+      setEdges(lastState.edges);
+      setHistory((prevHistory) => prevHistory.slice(0, -1));
+      notification.info({ message: "Acción deshecha" });
+    } else {
+      notification.warning({ message: "No hay acciones para deshacer" });
+    }
+  };
+
+  // Vaciar el grafo
+  const clearGraph = () => {
+    setHistory((prevHistory) => [...prevHistory, { nodes, edges }]);
+    setNodes([]);
+    setEdges([]);
+    setClique([]);
+    notification.success({ message: "Grafo vaciado" });
+  };
+
   return (
     <div style={{ height: "100vh", padding: "20px" }}>
       <div style={{ marginBottom: "20px" }}>
         <Button type="primary" onClick={addNode} style={{ marginRight: "10px" }}>
           Agregar Nodo
         </Button>
-        <Button type="primary" onClick={findClique}>
+        <Button type="primary" onClick={findClique} style={{ marginRight: "10px" }}>
           Calcular Clique
+        </Button>
+        <Button type="default" onClick={undo} style={{ marginRight: "10px" }}>
+          Deshacer
+        </Button>
+        <Button type="default" onClick={clearGraph}>
+          Vaciar Grafo
         </Button>
       </div>
       <ReactFlow
