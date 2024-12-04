@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { Layout } from "antd";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
-import Page1 from "./Pages/Page1";
-import Page2 from "./Pages/Page2";
-import Page3 from "./Pages/Page3";
+import Page1 from "./pages/Page1";
+import Page2 from "./pages/Page2"
+import Page3 from "./pages/Page3";
 const { Content } = Layout;
 
 const App = () => {
