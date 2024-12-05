@@ -10,20 +10,20 @@ import ReactFlow, {
 import { Button, notification } from "antd";
 
 const Page1 = () => {
-  const [nodes, setNodes, onNodesChange] = useNodesState([]); 
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]); 
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [nodeId, setNodeId] = useState(1);
   const [clique, setClique] = useState([]);
-  const [history, setHistory] = useState([]); 
+  const [history, setHistory] = useState([]);
 
   const addNode = () => {
     const newNode = {
       id: `${nodeId}`,
-      data: { label: `Nodo ${nodeId}` }, 
-      position: { x: Math.random() * 20, y: Math.random() * 20 },
+      data: { label: `Nodo ${nodeId}` },
+      position: { x: Math.random() * 200, y: Math.random() * 200 },
     };
 
-    setHistory((prevHistory) => [...prevHistory, { nodes, edges }]); 
+    setHistory((prevHistory) => [...prevHistory, { nodes, edges }]);
     setNodes((prevNodes) => [...prevNodes, newNode]);
     setNodeId(nodeId + 1);
 
@@ -33,12 +33,62 @@ const Page1 = () => {
     });
   };
 
+  const addRandomNodes = () => {
+    const count = parseInt(prompt("¿Cuántos nodos deseas agregar?"), 10);
+    if (isNaN(count) || count <= 0) {
+      notification.error({
+        message: "Número inválido",
+        description: "Por favor, introduce un número válido mayor a 0.",
+      });
+      return;
+    }
+
+    const newNodes = [];
+    const newEdges = [];
+
+    for (let i = 0; i < count; i++) {
+      const id = `${nodeId + i}`;
+      newNodes.push({
+        id,
+        data: { label: `Nodo ${id}` },
+        position: { x: Math.random() * 800, y: Math.random() * 600 },
+      });
+    }
+
+    newNodes.forEach((node, index) => {
+      const connections = Math.floor(Math.random() * count);
+      for (let j = 0; j < connections; j++) {
+        const targetIndex = Math.floor(Math.random() * newNodes.length);
+        if (index !== targetIndex) {
+          newEdges.push({
+            id: `e${node.id}-${newNodes[targetIndex].id}`,
+            source: node.id,
+            target: newNodes[targetIndex].id,
+            type: "straight",
+          });
+        }
+      }
+    });
+
+    setHistory((prevHistory) => [...prevHistory, { nodes, edges }]);
+    setNodes((prevNodes) => [...prevNodes, ...newNodes]);
+    setEdges((prevEdges) => [...prevEdges, ...newEdges]);
+    setNodeId(nodeId + count);
+
+    notification.success({
+      message: "Nodos agregados",
+      description: `${count} nodos agregados con conexiones aleatorias.`,
+    });
+  };
+
   const onConnect = useCallback(
     (params) => {
+      const newEdge = { ...params, type: "straight" }; // Asegura que el tipo de borde sea recto
+
       const edgeExists = edges.some(
         (edge) =>
-          (edge.source === params.source && edge.target === params.target) ||
-          (edge.source === params.target && edge.target === params.source)
+          (edge.source === newEdge.source && edge.target === newEdge.target) ||
+          (edge.source === newEdge.target && edge.target === newEdge.source)
       );
 
       if (edgeExists) {
@@ -49,63 +99,51 @@ const Page1 = () => {
         return;
       }
 
-      setHistory((prevHistory) => [...prevHistory, { nodes, edges }]); 
-      setEdges((prevEdges) => addEdge(params, prevEdges));
+      setHistory((prevHistory) => [...prevHistory, { nodes, edges }]);
+      setEdges((prevEdges) => addEdge(newEdge, prevEdges));
 
       notification.success({
         message: "Arista agregada",
-        description: `Conexión establecida entre ${params.source} y ${params.target}.`,
+        description: `Conexión establecida entre ${newEdge.source} y ${newEdge.target}.`,
       });
     },
     [edges, nodes]
   );
 
-  const isClique = (subset, adjacencyList) => {
-    for (let i = 0; i < subset.length; i++) {
-      for (let j = i + 1; j < subset.length; j++) {
-        if (!adjacencyList[subset[i]].includes(subset[j])) {
-          return false;
-        }
-      }
+  const bronKerbosch = (R, P, X, graph) => {
+    let cliques = [];
+    if (P.size === 0 && X.size === 0) {
+      cliques.push([...R]);
     }
-    return true;
-  };
-
-  const generateSubsets = (arr) => {
-    const subsets = [];
-    const backtrack = (current, index) => {
-      if (index === arr.length) {
-        subsets.push([...current]);
-        return;
-      }
-      current.push(arr[index]);
-      backtrack(current, index + 1);
-      current.pop();
-      backtrack(current, index + 1);
-    };
-    backtrack([], 0);
-    return subsets;
+    for (let v of P) {
+      let newR = new Set(R);
+      newR.add(v);
+      let newP = new Set([...P].filter((x) => graph.get(v).has(x)));
+      let newX = new Set([...X].filter((x) => graph.get(v).has(x)));
+      cliques = cliques.concat(bronKerbosch(newR, newP, newX, graph));
+      P.delete(v);
+      X.add(v);
+    }
+    return cliques;
   };
 
   const findClique = () => {
-    const adjacencyList = {};
+    const graph = new Map();
+
     nodes.forEach((node) => {
-      adjacencyList[node.id] = [];
+      graph.set(node.id, new Set());
     });
-
     edges.forEach(({ source, target }) => {
-      adjacencyList[source].push(target);
-      adjacencyList[target].push(source);
+      graph.get(source).add(target);
+      graph.get(target).add(source);
     });
 
-    const subsets = generateSubsets(nodes.map((node) => node.id));
-    let maxClique = [];
-
-    subsets.forEach((subset) => {
-      if (isClique(subset, adjacencyList) && subset.length > maxClique.length) {
-        maxClique = subset;
-      }
-    });
+    const vertices = new Set(graph.keys());
+    const allCliques = bronKerbosch(new Set(), vertices, new Set(), graph);
+    const maxClique = allCliques.reduce(
+      (max, clique) => (clique.length > max.length ? clique : max),
+      []
+    );
 
     setClique(maxClique);
     notification.success({
@@ -116,7 +154,6 @@ const Page1 = () => {
     });
   };
 
-  // Deshacer la última acción
   const undo = () => {
     if (history.length > 0) {
       const lastState = history[history.length - 1];
@@ -129,7 +166,6 @@ const Page1 = () => {
     }
   };
 
-  // Vaciar el grafo
   const clearGraph = () => {
     setHistory((prevHistory) => [...prevHistory, { nodes, edges }]);
     setNodes([]);
@@ -144,6 +180,9 @@ const Page1 = () => {
         <Button type="primary" onClick={addNode} style={{ marginRight: "10px" }}>
           Agregar Nodo
         </Button>
+        <Button type="primary" onClick={addRandomNodes} style={{ marginRight: "10px" }}>
+          Agregar Nodos Aleatorios
+        </Button>
         <Button type="primary" onClick={findClique} style={{ marginRight: "10px" }}>
           Calcular Clique
         </Button>
@@ -157,9 +196,9 @@ const Page1 = () => {
       <ReactFlow
         nodes={nodes}
         edges={edges}
-        onNodesChange={onNodesChange} 
-        onEdgesChange={onEdgesChange} 
-        onConnect={onConnect} 
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
         fitView
         style={{ width: "100%", height: "80%" }}
       >
