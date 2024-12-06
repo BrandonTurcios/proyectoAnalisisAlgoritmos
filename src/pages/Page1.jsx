@@ -9,6 +9,8 @@ import ReactFlow, {
 } from "react-flow-renderer";
 import { Button, notification } from "antd";
 
+
+
 const Page1 = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -107,7 +109,7 @@ const Page1 = () => {
         description: `Conexión establecida entre ${newEdge.source} y ${newEdge.target}.`,
       });
     },
-    [edges, nodes]
+    [edges, nodes, setEdges, setHistory]
   );
 
   const bronKerbosch = (R, P, X, graph) => {
@@ -128,6 +130,7 @@ const Page1 = () => {
   };
 
   const findClique = () => {
+    const inicio = performance.now();
     const graph = new Map();
 
     nodes.forEach((node) => {
@@ -146,12 +149,14 @@ const Page1 = () => {
     );
 
     setClique(maxClique);
+    const fin = performance.now();
     notification.success({
       message: "Clique encontrado",
       description: maxClique.length
-        ? `Clique máximo: ${maxClique.join(", ")}`
+        ? `Clique máximo: ${maxClique.join(", ")} (${maxClique.length} nodos) (Tiempo del proceso= ${fin - inicio} ms)`
         : "No se encontró un clique.",
     });
+    
   };
 
   const undo = () => {
@@ -211,6 +216,8 @@ const Page1 = () => {
           <h3>
             Clique Encontrado:{" "}
             <span style={{ color: "green" }}>{clique.join(", ")}</span>
+            Size del clique:{" "}
+            <span style={{ color: "green" }}>{clique.length}</span>
           </h3>
         ) : (
           <h3>No se encontró un clique.</h3>
