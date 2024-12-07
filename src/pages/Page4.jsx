@@ -187,34 +187,75 @@ const Page4 = () => {
 
   const findClique = () => {
     const inicio = performance.now();
-    const adjacencyList = {};
-    nodes.forEach((node) => {
-      adjacencyList[node.id] = [];
+    
+    // Crear matriz de adyacencia
+    const matrix = Array.from({ length: nodes.length }, () =>
+        Array(nodes.length).fill(false)
+    );
+    nodes.forEach((node, i) => {
+        edges.forEach(({ source, target }) => {
+            if (node.id === source || node.id === target) {
+                const sourceIndex = nodes.findIndex((n) => n.id === source);
+                const targetIndex = nodes.findIndex((n) => n.id === target);
+                matrix[sourceIndex][targetIndex] = true;
+                matrix[targetIndex][sourceIndex] = true;
+            }
+        });
     });
 
-    edges.forEach(({ source, target }) => {
-      adjacencyList[source].push(target);
-      adjacencyList[target].push(source);
-    });
-
-    const subsets = generateSubsets(nodes.map((node) => node.id));
     let maxClique = [];
+    const estado = Array(nodes.length).fill("ND");
 
-    subsets.forEach((subset) => {
-      if (isClique(subset, adjacencyList) && subset.length > maxClique.length) {
-        maxClique = subset;
-      }
-    });
+    // Recorre todos los nodos con ciclos redundantes
+    for (let i = 0; i < nodes.length; i++) {
+        const currentClique = [];
+        let esClique = true;
 
+        for (let j = 0; j < maxClique.length; j++) {
+            const uIndex = nodes.findIndex((n) => n.id === maxClique[j]);
+            if (!matrix[i][uIndex]) {
+                esClique = false;
+                break; // No es vecino de todos, no puede pertenecer a la clique
+            }
+        }
+
+        if (esClique) {
+            currentClique.push(nodes[i].id);
+            estado[i] = "D";
+        }
+
+        // Verificar vecinos para expandir la clique (iteraciones duplicadas)
+        for (let j = 0; j < nodes.length; j++) {
+            let esVecinoDeTodos = true;
+            for (let k = 0; k < currentClique.length; k++) {
+                const uIndex = nodes.findIndex((n) => n.id === currentClique[k]);
+                if (!matrix[j][uIndex]) {
+                    esVecinoDeTodos = false;
+                    break; // No es vecino de todos
+                }
+            }
+            if (esVecinoDeTodos) {
+                currentClique.push(nodes[j].id);
+            }
+        }
+
+        // Comparar y actualizar maxClique
+        if (currentClique.length > maxClique.length) {
+            maxClique = [...currentClique];
+        }
+    }
+
+    // Resultado final
+    
     setClique(maxClique);
     const fin = performance.now();
     notification.success({
-      message: "Clique encontrado",
-      description: maxClique.length
-        ? `Clique máximo: ${maxClique.join(", ")} (${maxClique.length} nodos) (Tiempo del proceso= ${fin - inicio} ms)`
-        : "No se encontró un clique.",
+        message: "Clique ineficiente encontrada",
+        description: `Clique: ${maxClique.join(", ")} (Tamaño: ${maxClique.length}) (Tiempo del proceso: ${(fin - inicio).toFixed(2)} ms)`,
     });
-  };
+};
+
+
 
   // Deshacer la última acción
   const undo = () => {
