@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Form, Input, Button, Table, InputNumber, Typography, Divider } from "antd";
+import { Form, Input, Button, Table, InputNumber, Typography, Divider, message } from "antd";
+import { maximize } from "../algorithms/knapsack"; // Importamos la función maximize
 import "./Page3.css";
 
 const { Title } = Typography;
@@ -10,10 +11,31 @@ const Page3 = () => {
   const [result, setResult] = useState(null);
 
   const addItem = (values) => {
+    if (values.weight <= 0 || values.value <= 0) {
+      message.error("Peso y Valor deben ser mayores a 0.");
+      return;
+    }
+
+    if (items.some((item) => item.name === values.name)) {
+      message.error("El nombre del artículo debe ser único.");
+      return;
+    }
+
     setItems([...items, { ...values, key: items.length }]);
+    message.success("Artículo agregado con éxito.");
   };
 
   const solveKnapsack = () => {
+    if (items.length === 0) {
+      message.warning("Agregar al menos un item antes de resolver.");
+      return;
+    }
+
+    if (capacity <= 0) {
+      message.error("La capacidad debe ser mayor a 0.");
+      return;
+    }
+
     const valores = items.map((item) => item.value);
     const pesos = items.map((item) => item.weight);
     const n = items.length;
@@ -27,38 +49,13 @@ const Page3 = () => {
     const totalWeight = selectedItems.reduce((sum, item) => sum + item.weight, 0);
 
     setResult({ maxValue, totalWeight, selectedItems, unselectedItems });
+
   };
 
-  const maximize = (pesos, valores, resultados, n, capacidad) => {
-    const z = new Array(n);
-    for (let i = 0; i < n; i++) {
-      z[i] = valores[i] / pesos[i];
-    }
-    let pesoTotal = 0;
-    while (pesoTotal <= capacidad) {
-      const indice = findMax(z);
-      if (z[indice] === 0) break;
-
-      resultados[indice] = 1;
-      z[indice] = 0;
-      pesoTotal += pesos[indice];
-
-      if (pesoTotal > capacidad) {
-        pesoTotal -= pesos[indice];
-        resultados[indice] = 0;
-      }
-    }
-  };
-  const findMax = (array) => {
-    let max = -1;
-    let indice = -1;
-    for (let i = 0; i < array.length; i++) {
-      if (array[i] > max) {
-        max = array[i];
-        indice = i;
-      }
-    }
-    return indice;
+  const reset = () => {
+    setItems([]);
+    setCapacity(0);
+    setResult(null);
   };
 
   return (
@@ -67,20 +64,40 @@ const Page3 = () => {
 
       <Form layout="inline" onFinish={addItem}>
         <Form.Item
+          label="Nombre"
           name="name"
-          rules={[{ required: true, message: "Nombre es requerido" }]}
+          rules={[
+            { required: true, message: "Nombre es requerido" },
+            { max: 50, message: "El nombre no puede exceder 50 caracteres." },
+          ]}
         >
-          <Input placeholder="Nombre del artículo" />
+          <Input placeholder="Nombre" />
         </Form.Item>
         <Form.Item
+          label="Peso"
           name="weight"
-          rules={[{ required: true, message: "Peso es requerido" }]}
+          rules={[
+            { required: true, message: "Peso es requerido" },
+            {
+              type: "number",
+              min: 1,
+              message: "El peso debe ser un número mayor o igual a 1.",
+            },
+          ]}
         >
           <InputNumber placeholder="Peso" min={1} />
         </Form.Item>
         <Form.Item
+          label="Valor"
           name="value"
-          rules={[{ required: true, message: "Valor es requerido" }]}
+          rules={[
+            { required: true, message: "Valor es requerido" },
+            {
+              type: "number",
+              min: 1,
+              message: "El valor debe ser un número mayor o igual a 1.",
+            },
+          ]}
         >
           <InputNumber placeholder="Valor" min={1} />
         </Form.Item>
@@ -90,6 +107,7 @@ const Page3 = () => {
           </Button>
         </Form.Item>
       </Form>
+
       <Table
         style={{ marginTop: "20px" }}
         dataSource={items}
@@ -105,12 +123,21 @@ const Page3 = () => {
         <InputNumber
           placeholder="Capacidad máxima"
           value={capacity}
-          onChange={setCapacity}
+          onChange={(value) => {
+            if (value > 0) {
+              setCapacity(value);
+            } else {
+              message.error("La capacidad debe ser mayor a 0.");
+            }
+          }}
           min={1}
           style={{ width: "200px", marginRight: "10px" }}
         />
-        <Button type="primary" onClick={solveKnapsack}>
+        <Button type="primary" onClick={solveKnapsack} style={{ marginRight: "10px" }}>
           Resolver
+        </Button>
+        <Button onClick={reset} danger>
+          Reset
         </Button>
       </div>
       {result && (
@@ -118,7 +145,9 @@ const Page3 = () => {
           <Divider />
           <Title level={3}>Resultado</Title>
           <p>Valor Máximo: {result.maxValue}</p>
-          <p>Peso Total: {result.totalWeight}/{capacity}</p>
+          <p>
+            Peso Total: {result.totalWeight}/{capacity}
+          </p>
 
           <div className="knapsack">
             <div className="knapsack-container">
