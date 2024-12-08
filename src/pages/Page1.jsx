@@ -115,17 +115,24 @@ const Page1 = () => {
   const bronKerbosch = (R, P, X, graph) => {
     let cliques = [];
     if (P.size === 0 && X.size === 0) {
-      cliques.push([...R]);
+      cliques.push([...R]);  //Accion de 1 valor por if
     }
+
     for (let v of P) {
       let newR = new Set(R);
       newR.add(v);
       let newP = new Set([...P].filter((x) => graph.get(v).has(x)));
       let newX = new Set([...X].filter((x) => graph.get(v).has(x)));
-      cliques = cliques.concat(bronKerbosch(newR, newP, newX, graph));
+      /*const setIter = newX.keys();
+      for(let i = 0; i < newX.size; i++){
+        console.log("El newX: ",setIter.next().value);
+      }*/
+      cliques = cliques.concat(bronKerbosch(newR, newP, newX, graph));  //Recursividad de bron-kerbosch y se concatena junto a clique
       P.delete(v);
       X.add(v);
     }
+
+
     return cliques;
   };
 
@@ -134,15 +141,15 @@ const Page1 = () => {
     const graph = new Map();
 
     nodes.forEach((node) => {
-      graph.set(node.id, new Set());
+      graph.set(node.id, new Set()); //crea nodo junto con su lista para la adyacencia
     });
     edges.forEach(({ source, target }) => {
       graph.get(source).add(target);
-      graph.get(target).add(source);
+      graph.get(target).add(source); // Define las aristas del grafo
     });
 
-    const vertices = new Set(graph.keys());
-    const allCliques = bronKerbosch(new Set(), vertices, new Set(), graph);
+    const vertices = new Set(graph.keys()); //Guarda los nodos junto con sus conexiones
+    const allCliques = bronKerbosch(new Set(), vertices, new Set(), graph); //Llama a la funcion de bronKerbosch
     const maxClique = allCliques.reduce(
       (max, clique) => (clique.length > max.length ? clique : max),
       []

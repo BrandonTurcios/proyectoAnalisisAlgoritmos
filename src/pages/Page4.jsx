@@ -131,11 +131,13 @@ const Page4 = () => {
       setHistory((prevHistory) => [...prevHistory, { nodes, edges }]); 
       setEdges((prevEdges) => addEdge(params, prevEdges));
   
+
+      
       setGraph((prevGraph) => {
         const source = parseInt(params.source, 10);
         const target = parseInt(params.target, 10);
-  
-        if (source >= prevGraph.V || target >= prevGraph.V) {
+        console.log("source:", source, "target:", target, "V:", prevGraph.V);
+        if (source > prevGraph.V || target > prevGraph.V) {
           notification.error({
             message: "Error al agregar arista",
             description: "Uno o ambos nodos no existen en el grafo.",
@@ -154,35 +156,47 @@ const Page4 = () => {
         description: `Conexión establecida entre ${params.source} y ${params.target}.`,
       });
     },
-    [edges, nodes]
+    [edges, nodes, setEdges, setHistory]
   );
   
 
-  const isClique = (subset, adjacencyList) => {
-    for (let i = 0; i < subset.length; i++) {
-      for (let j = i + 1; j < subset.length; j++) {
-        if (!adjacencyList[subset[i]].includes(subset[j])) {
-          return false;
+  const findMaxClique = (x, matrix, currentClique = []) => {
+    let maxClique = [...currentClique];  // Inicia con el clique actual
+    maxClique.push(x);  // Agrega el nodo actual al clique
+  
+    // Buscar vecinos del nodo x
+    let lista = [];
+    for (let i = 0; i < nodes.length; i++) {
+      if (matrix[x][i]) {
+        lista.push(i);
+      }
+    }
+  
+    // Verificar si cada nodo en lista es parte de un clique mayor
+    for (let i = 0; i < lista.length; i++) {
+      let isClique = true;
+  
+      // Verificar si todos los nodos de maxClique son vecinos del nodo lista[i]
+      for (let j = 0; j < maxClique.length; j++) {
+        if (!matrix[lista[i]][maxClique[j]]) {
+          isClique = false;
+          break;
+        }
+      }
+  
+      // Si es vecino de todos los nodos en el clique actual, agregamos el nodo
+      if (isClique) {
+        // Llamada recursiva con el nuevo clique
+        const newClique = findMaxClique(lista[i], matrix, maxClique);
+        
+        // Si el nuevo clique es más grande, actualizamos maxClique
+        if (newClique.length > maxClique.length) {
+          maxClique = [...newClique];
         }
       }
     }
-    return true;
-  };
-
-  const generateSubsets = (arr) => {
-    const subsets = [];
-    const backtrack = (current, index) => {
-      if (index === arr.length) {
-        subsets.push([...current]);
-        return;
-      }
-      current.push(arr[index]);
-      backtrack(current, index + 1);
-      current.pop();
-      backtrack(current, index + 1);
-    };
-    backtrack([], 0);
-    return subsets;
+  
+    return maxClique;  // Retorna el clique máximo encontrado
   };
 
   const findClique = () => {
@@ -190,70 +204,43 @@ const Page4 = () => {
     
     // Crear matriz de adyacencia
     const matrix = Array.from({ length: nodes.length }, () =>
-        Array(nodes.length).fill(false)
+      Array(nodes.length).fill(false)
     );
+  
     nodes.forEach((node, i) => {
-        edges.forEach(({ source, target }) => {
-            if (node.id === source || node.id === target) {
-                const sourceIndex = nodes.findIndex((n) => n.id === source);
-                const targetIndex = nodes.findIndex((n) => n.id === target);
-                matrix[sourceIndex][targetIndex] = true;
-                matrix[targetIndex][sourceIndex] = true;
-            }
-        });
+      edges.forEach(({ source, target }) => {
+        if (node.id === source || node.id === target) {
+          const sourceIndex = nodes.findIndex((n) => n.id === source);
+          const targetIndex = nodes.findIndex((n) => n.id === target);
+          matrix[sourceIndex][targetIndex] = true;
+          matrix[targetIndex][sourceIndex] = true;
+        }
+      });
     });
-
+  
     let maxClique = [];
-    const estado = Array(nodes.length).fill("ND");
-
-    // Recorre todos los nodos con ciclos redundantes
+  
+    // Usar findMaxClique para encontrar el clique máximo
     for (let i = 0; i < nodes.length; i++) {
-        const currentClique = [];
-        let esClique = true;
-
-        for (let j = 0; j < maxClique.length; j++) {
-            const uIndex = nodes.findIndex((n) => n.id === maxClique[j]);
-            if (!matrix[i][uIndex]) {
-                esClique = false;
-                break; // No es vecino de todos, no puede pertenecer a la clique
-            }
+      const currentClique = findMaxClique(i, matrix);  // Buscar clique máximo empezando desde el nodo i
+      if (currentClique.length > maxClique.length) {
+        for(let j = 0; j < currentClique.length; j++){
+          currentClique[j] = currentClique[j] + 1;
         }
-
-        if (esClique) {
-            currentClique.push(nodes[i].id);
-            estado[i] = "D";
-        }
-
-        // Verificar vecinos para expandir la clique (iteraciones duplicadas)
-        for (let j = 0; j < nodes.length; j++) {
-            let esVecinoDeTodos = true;
-            for (let k = 0; k < currentClique.length; k++) {
-                const uIndex = nodes.findIndex((n) => n.id === currentClique[k]);
-                if (!matrix[j][uIndex]) {
-                    esVecinoDeTodos = false;
-                    break; // No es vecino de todos
-                }
-            }
-            if (esVecinoDeTodos) {
-                currentClique.push(nodes[j].id);
-            }
-        }
-
-        // Comparar y actualizar maxClique
-        if (currentClique.length > maxClique.length) {
-            maxClique = [...currentClique];
-        }
+        maxClique = [...currentClique];  // Actualizar el clique máximo encontrado
+      }
     }
-
+  
     // Resultado final
-    
     setClique(maxClique);
+    
     const fin = performance.now();
     notification.success({
-        message: "Clique ineficiente encontrada",
-        description: `Clique: ${maxClique.join(", ")} (Tamaño: ${maxClique.length}) (Tiempo del proceso: ${(fin - inicio).toFixed(2)} ms)`,
+      message: "Clique máximo encontrado",
+      description: `Clique: ${maxClique.join(", ")} (Tamaño: ${maxClique.length}) (Tiempo del proceso: ${(fin - inicio).toFixed(2)} ms)`,
     });
-};
+  };
+  
 
 
 
@@ -276,6 +263,7 @@ const Page4 = () => {
     setNodes([]);
     setEdges([]);
     setClique([]);
+    setNodeId(1); // Reinicia el ID de los nodos
     setGraph(new Grafo(0)); // Reinicia el grafo
     notification.success({ message: "Grafo vaciado" });
   };
