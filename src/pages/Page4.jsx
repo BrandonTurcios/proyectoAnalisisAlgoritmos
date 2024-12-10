@@ -43,6 +43,108 @@ const Page4 = () => {
     });
   };
 
+  const addCliqueGraph = () => {
+    const numNodes = 300; // Número fijo de nodos
+    const newNodes = [];
+    const newEdges = [];
+  
+    // Crear nodos
+    for (let i = 0; i < numNodes; i++) {
+      const id = `${nodeId + i}`;
+      newNodes.push({
+        id,
+        data: { label: `Nodo ${id}` },
+        position: { x: Math.random() * 800, y: Math.random() * 600 },
+      });
+    }
+  
+    // Crear aristas para formar cliques de tamaño 2
+    for (let i = 0; i < numNodes; i += 2) {
+      const node1 = newNodes[i];
+      const node2 = newNodes[i + 1];
+  
+      newEdges.push({
+        id: `e${node1.id}-${node2.id}`,
+        source: node1.id,
+        target: node2.id,
+        type: "straight",
+      });
+    }
+  
+    // Actualizar el estado de React Flow de forma eficiente (evitando renders repetitivos)
+    setNodes((prevNodes) => [...prevNodes, ...newNodes]);
+    setEdges((prevEdges) => [...prevEdges, ...newEdges]);
+    setNodeId((prevId) => prevId + numNodes);
+  
+    notification.success({
+      message: "Grafo de cliques disjuntos creado",
+      description: `Se crearon ${numNodes / 2} cliques de 2 nodos cada uno.`,
+    });
+  };
+  
+
+  const grafoCompleto = () => {
+    const count = parseInt(prompt("¿Cuántos nodos deseas agregar?"), 10);
+  
+    if (isNaN(count) || count <= 0) {
+      notification.error({
+        message: "Número inválido",
+        description: "Por favor, introduce un número válido mayor a 0.",
+      });
+      return;
+    }
+  
+    const newNodes = [];
+    const newEdges = [];
+    let updatedGraph;
+  
+    setGraph((prevGraph) => {
+      // Crea una copia del grafo anterior y agrega nuevos nodos
+      updatedGraph = new Grafo(prevGraph.V + count);
+      updatedGraph.adj = [...prevGraph.adj, ...Array.from({ length: count }, () => [])];
+  
+      // Genera nodos aleatorios
+      for (let i = 0; i < count; i++) {
+        const id = `${nodeId + i}`;
+        newNodes.push({
+          id,
+          data: { label: `Nodo ${id}` },
+          position: { x: Math.random() * 800, y: Math.random() * 600 },
+        });
+      }
+  
+      // Conecta todos los nodos nuevos entre sí y con los existentes
+      for (let i = 0; i < prevGraph.V + count; i++) {
+        for (let j = i + 1; j < prevGraph.V + count; j++) {
+          const sourceId = i < prevGraph.V ? `${i + 1}` : `${nodeId + (i - prevGraph.V)}`;
+          const targetId = j < prevGraph.V ? `${j + 1}` : `${nodeId + (j - prevGraph.V)}`;
+  
+          updatedGraph.addEdge(i, j); // Agrega la arista al grafo
+          newEdges.push({
+            id: `e${sourceId}-${targetId}`,
+            source: sourceId,
+            target: targetId,
+            type: "straight",
+          });
+        }
+      }
+  
+      return updatedGraph; // Retorna el grafo actualizado
+    });
+  
+    // Actualiza los estados de React Flow
+    setHistory((prevHistory) => [...prevHistory, { nodes, edges }]);
+    setNodes((prevNodes) => [...prevNodes, ...newNodes]);
+    setEdges((prevEdges) => [...prevEdges, ...newEdges]);
+    setNodeId(nodeId + count);
+  
+    notification.success({
+      message: "Nodos agregados",
+      description: `${count} nodos agregados y conectados completamente.`,
+    });
+  };
+  
+
   const addRandomNodes = () => {
     const count = parseInt(prompt("¿Cuántos nodos deseas agregar?"), 10);
   
@@ -276,6 +378,12 @@ const Page4 = () => {
         </Button>
         <Button type="primary" onClick={addRandomNodes} style={{ marginRight: "10px" }}>
           Agregar Nodos Aleatorios
+        </Button>
+        <Button type="primary" onClick={grafoCompleto} style={{ marginRight: "10px" }}>
+          Hacer Grafo completo
+        </Button>
+        <Button type="primary" onClick={addCliqueGraph} style={{ marginRight: "10px" }}>
+          Hacer Grafo clique
         </Button>
         <Button type="primary" onClick={findClique} style={{ marginRight: "10px" }}>
           Calcular Clique

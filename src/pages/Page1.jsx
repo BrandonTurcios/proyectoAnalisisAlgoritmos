@@ -18,6 +18,7 @@ const Page1 = () => {
   const [clique, setClique] = useState([]);
   const [history, setHistory] = useState([]);
 
+
   const addNode = () => {
     const newNode = {
       id: `${nodeId}`,
@@ -34,6 +35,119 @@ const Page1 = () => {
       description: `Nodo ${nodeId} agregado correctamente.`,
     });
   };
+
+  const grafoConCliquesSeparados = () => {
+    const cliqueCount = parseInt(prompt("¿Cuántos cliques deseas agregar?"), 10);
+    const nodesPerClique = parseInt(prompt("¿Cuántos nodos por clique?"), 10);
+  
+    if (isNaN(cliqueCount) || cliqueCount <= 0 || isNaN(nodesPerClique) || nodesPerClique <= 0) {
+      notification.error({
+        message: "Número inválido",
+        description: "Por favor, introduce un número válido mayor a 0.",
+      });
+      return;
+    }
+  
+    const newNodes = [];
+    const newEdges = [];
+    let nodeIdOffset = nodeId;
+  
+    // Crear cliques
+    for (let cliqueIndex = 0; cliqueIndex < cliqueCount; cliqueIndex++) {
+      const cliqueNodes = [];
+  
+      // Crear nodos para este clique
+      for (let i = 0; i < nodesPerClique; i++) {
+        const id = `${nodeIdOffset + i}`;
+        cliqueNodes.push({
+          id,
+          data: { label: `Nodo ${id}` },
+          position: { x: Math.random() * 800, y: Math.random() * 600 },
+        });
+      }
+  
+      // Crear conexiones entre todos los nodos de este clique (grafo completo dentro del clique)
+      for (let i = 0; i < cliqueNodes.length; i++) {
+        for (let j = i + 1; j < cliqueNodes.length; j++) {
+          newEdges.push({
+            id: `e${cliqueNodes[i].id}-${cliqueNodes[j].id}`,
+            source: cliqueNodes[i].id,
+            target: cliqueNodes[j].id,
+            type: "straight",
+          });
+        }
+      }
+  
+      // Agregar los nodos de este clique a los nodos generales
+      newNodes.push(...cliqueNodes);
+  
+      // Actualizar el offset de nodeId para el próximo clique
+      nodeIdOffset += nodesPerClique;
+    }
+  
+    // Actualiza el estado del grafo
+    setHistory((prevHistory) => [...prevHistory, { nodes, edges }]);
+    setNodes((prevNodes) => [...prevNodes, ...newNodes]);
+    setEdges((prevEdges) => [...prevEdges, ...newEdges]);
+    setNodeId(nodeIdOffset); // Actualizar el ID para nuevos nodos
+  
+    notification.success({
+      message: "Cliques creados",
+      description: `${cliqueCount} cliques creados con ${nodesPerClique} nodos cada uno, conectados entre sí.`,
+    });
+  };
+  
+  
+
+  const grafoCompleto = () => {
+      const count = parseInt(prompt("¿Cuántos nodos deseas agregar?"), 10);
+    
+      if (isNaN(count) || count <= 0) {
+        notification.error({
+          message: "Número inválido",
+          description: "Por favor, introduce un número válido mayor a 0.",
+        });
+        return;
+      }
+    
+      const newNodes = [];
+      const newEdges = [];
+    
+      // Crear nuevos nodos
+      for (let i = 0; i < count; i++) {
+        const id = `${nodeId + i}`;
+        newNodes.push({
+          id,
+          data: { label: `Nodo ${id}` },
+          position: { x: Math.random() * 800, y: Math.random() * 600 },
+        });
+      }
+    
+      // Crear conexiones entre todos los nodos (grafo completo)
+      const allNodes = [...nodes, ...newNodes]; // Incluye los nodos existentes y los nuevos
+      for (let i = 0; i < allNodes.length; i++) {
+        for (let j = i + 1; j < allNodes.length; j++) {
+          newEdges.push({
+            id: `e${allNodes[i].id}-${allNodes[j].id}`,
+            source: allNodes[i].id,
+            target: allNodes[j].id,
+            type: "straight",
+          });
+        }
+      }
+    
+      // Actualiza el estado del grafo
+      setHistory((prevHistory) => [...prevHistory, { nodes, edges }]);
+      setNodes((prevNodes) => [...prevNodes, ...newNodes]);
+      setEdges((prevEdges) => [...prevEdges, ...newEdges]);
+      setNodeId(nodeId + count);
+    
+      notification.success({
+        message: "Grafo completo creado",
+        description: `${count} nodos agregados y conectados completamente.`,
+      });
+  };
+    
 
   const addRandomNodes = () => {
     const count = parseInt(prompt("¿Cuántos nodos deseas agregar?"), 10);
@@ -123,15 +237,11 @@ const Page1 = () => {
       newR.add(v);
       let newP = new Set([...P].filter((x) => graph.get(v).has(x)));
       let newX = new Set([...X].filter((x) => graph.get(v).has(x)));
-      /*const setIter = newX.keys();
-      for(let i = 0; i < newX.size; i++){
-        console.log("El newX: ",setIter.next().value);
-      }*/
+      
       cliques = cliques.concat(bronKerbosch(newR, newP, newX, graph));  //Recursividad de bron-kerbosch y se concatena junto a clique
       P.delete(v);
       X.add(v);
     }
-
 
     return cliques;
   };
@@ -194,6 +304,12 @@ const Page1 = () => {
         </Button>
         <Button type="primary" onClick={addRandomNodes} style={{ marginRight: "10px" }}>
           Agregar Nodos Aleatorios
+        </Button>
+        <Button type="primary" onClick={grafoCompleto} style={{ marginRight: "10px" }}>
+          Hacer Grafo completo
+        </Button>
+        <Button type="primary" onClick={grafoConCliquesSeparados} style={{ marginRight: "10px" }}>
+          Hacer Grafo 5 separados
         </Button>
         <Button type="primary" onClick={findClique} style={{ marginRight: "10px" }}>
           Calcular Clique
