@@ -20,6 +20,7 @@
       subset.pop();
     }
   }
+
   //Nuestra funcion para obtener los sets.
   function subsets(A) {
     const subset = [];
@@ -30,7 +31,7 @@
     //retornamos una lista de tamano 2^N
   }
   
-  export function mainAlgorithm(array, targetSum = 0) {
+  export function mainAlgorithm(array, s) {
     let half = Math.ceil(array.length / 2);
   
     let arrayDes = array.slice(0, half);
@@ -46,14 +47,13 @@
 
   
     let sum=1;
-    let s=0; // Necesitamos encontrar dos sumas de subjuntos que sumadas de s
+    // Necesitamos encontrar dos sumas de subjuntos que sumadas de s
     let indexA=0; //inidce para arreglo izquierdo
     let indexB=0; //indice para arreglo derecho
   
     while(indexA<arrayDes.length && indexB<arrayAsc.length){
          
       sum=arrayDes[indexA]+arrayAsc[indexB];
-      console.log(sum)
       //si la suma es mayor a s
       if( sum> s){
          //movemos el indice del arreglo izquierdo un paso.
@@ -67,6 +67,9 @@
           break;
           
       }
+  }
+  if(sum!==s){
+    sum=null;
   }
   console.log('El valor de la suma es: ')
   console.log(sum)

@@ -1,17 +1,13 @@
 import React, { useState } from "react";
 import { Input, Button, Typography, Table } from "antd";
-import { mainAlgorithm } from "../algorithms/Subsetsum";
+import { isSubsetSum } from "../algorithmExact/subsetExact";
 
 const { Title } = Typography;
 
 const SubsetSumPage = () => {
   const [array, setArray] = useState([]);
   const [targetSum, setTargetSum] = useState(0); // Nuevo estado para la suma objetivo
-  const [result, setResult] = useState({
-    arrayAsc: [],
-    arrayDes: [],
-    sum: null,
-  });
+  const [result, setResult] = useState();
 
   const handleInputChange = (e) => {
     const value = e.target.value;
@@ -21,9 +17,9 @@ const SubsetSumPage = () => {
 
   const handleRunAlgorithm = () => {
     const inicio = performance.now();
-    const output = mainAlgorithm(array, targetSum); // Usa el valor especificado por el usuario
+    const output = isSubsetSum(array, targetSum); // Usa el valor especificado por el usuario
     const fin = performance.now();
-    console.log("El tiempo es: ");
+    console.log("El tiempo es: ")
     console.log(fin - inicio);
     setResult(output);
   };
@@ -63,19 +59,9 @@ const SubsetSumPage = () => {
       <div>
         <Title level={4}>Results</Title>
         <p>
-          <strong>Sum Found:</strong> {result.sum !== null ? result.sum : "Not Found"}
+          <strong>Resultado :</strong> {result === true ? "Se encontro el valor" : "Not Found"}
         </p>
-        <Table
-          dataSource={[
-            {
-              key: "1",
-              arrayAsc: result.arrayAsc,
-              arrayDes: result.arrayDes,
-            },
-          ]}
-          columns={columns}
-          pagination={false}
-        />
+        
       </div>
     </div>
   );
