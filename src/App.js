@@ -5,6 +5,7 @@ import Navbar from "./components/Navbar";
 import Page1 from "./pages/Page1";
 import Page2 from "./pages/Page2";
 import Page3 from "./pages/Page3";
+import Page3Exacto from "./pages/Page3Exacto";
 const { Content } = Layout;
 
 const App = () => {
@@ -24,8 +25,9 @@ const App = () => {
         <Content style={{ marginTop: 64, padding: "20px", textAlign: "center" }}>
           <Routes>
             <Route path="/" element={<Page1 />} />
-            <Route path="/page2" element={<Page2 />} />
+            <Route path="/page2" element={<Page3 />} />
             <Route path="/page3" element={<Page3 />} />
+            <Route path="/page3exacto" element={<Page3Exacto />} />
           </Routes>
         </Content>
       </Layout>

@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { Form, Input, Button, Table, InputNumber, Typography, Divider, message } from "antd";
-import { maximize } from "../algorithms/knapsack";
+import { kSack } from "../algorithms/knapsackExacto.js"; // Importamos la nueva función
 import "./Page3.css";
 
 const { Title } = Typography;
 
-const Page3 = () => {
+const Page3Exacto = () => {
   const [items, setItems] = useState([]);
   const [capacity, setCapacity] = useState(0);
   const [randomCount, setRandomCount] = useState(0);
@@ -48,38 +48,79 @@ const Page3 = () => {
       message.warning("Agregar al menos un item antes de resolver.");
       return;
     }
-
+  
     if (capacity <= 0) {
       message.error("La capacidad debe ser mayor a 0.");
       return;
     }
-
+  
     const valores = items.map((item) => item.value);
     const pesos = items.map((item) => item.weight);
-    const n = items.length;
-    const resultados = new Array(n).fill(0);
-
+  
     const startTime = performance.now(); // Inicio del tiempo
-
-    // Llamada a maximize
-    maximize(pesos, valores, resultados, n, capacity);
-
+  
+    // Llamada a kSack para resolver el problema de la mochila
+    const maxValue = kSack(capacity, pesos, valores);
+  
     const endTime = performance.now(); // Fin del tiempo
-
-    const selectedItems = items.filter((_, index) => resultados[index] === 1);
-    const unselectedItems = items.filter((_, index) => resultados[index] === 0);
-    const maxValue = selectedItems.reduce((sum, item) => sum + item.value, 0);
+  
+    // Ahora, reconstruir qué elementos se seleccionaron
+    let W = capacity;
+    const selectedItems = [];
+    let memo = Array.from({ length: items.length + 1 }, () => Array(W + 1).fill(0));
+  
+    // Llenar la tabla de memoria (programación dinámica)
+    for (let i = 1; i <= items.length; i++) {
+      for (let w = 0; w <= W; w++) {
+        if (items[i - 1].weight <= w) {
+          memo[i][w] = Math.max(memo[i - 1][w], items[i - 1].value + memo[i - 1][w - items[i - 1].weight]);
+        } else {
+          memo[i][w] = memo[i - 1][w];
+        }
+      }
+    }
+  
+    // Reconstruir los artículos seleccionados
+    let w = W;
+    for (let i = items.length; i > 0; i--) {
+      if (memo[i][w] !== memo[i - 1][w]) {
+        selectedItems.push(items[i - 1]);
+        w -= items[i - 1].weight;
+      }
+    }
+  
+    // Verificar si el peso total excede la capacidad
     const totalWeight = selectedItems.reduce((sum, item) => sum + item.weight, 0);
+    
+    if (totalWeight > capacity) {
+      // Si excede la capacidad, eliminamos ítems hasta que el peso se ajuste
+      selectedItems.sort((a, b) => b.value - a.value); // Opcionalmente ordenar por valor
+      let adjustedWeight = 0;
+      const finalSelectedItems = [];
+  
+      for (let item of selectedItems) {
+        if (adjustedWeight + item.weight <= capacity) {
+          finalSelectedItems.push(item);
+          adjustedWeight += item.weight;
+        }
+      }
+  
+      // Actualizamos la lista de seleccionados
+      selectedItems.length = 0;
+      selectedItems.push(...finalSelectedItems);
+    }
+  
     const executionTime = (endTime - startTime).toFixed(2); // Tiempo de ejecución
-
+  
     setResult({
       maxValue,
-      totalWeight,
+      totalWeight: selectedItems.reduce((sum, item) => sum + item.weight, 0),
       selectedItems,
-      unselectedItems,
+      unselectedItems: items.filter(item => !selectedItems.includes(item)),
       executionTime,
     });
   };
+  
 
   const reset = () => {
     setItems([]);
@@ -221,4 +262,4 @@ const Page3 = () => {
   );
 };
 
-export default Page3;
+export default Page3Exacto;
