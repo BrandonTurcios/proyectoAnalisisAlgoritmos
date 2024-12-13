@@ -24,20 +24,6 @@ const SubsetSumPage = () => {
     setResult(output);
   };
 
-  const columns = [
-    {
-      title: "Ascendente (arrayAsc)",
-      dataIndex: "arrayAsc",
-      key: "arrayAsc",
-      render: (value) => value.join(", "),
-    },
-    {
-      title: "Descendente (arrayDes)",
-      dataIndex: "arrayDes",
-      key: "arrayDes",
-      render: (value) => value.join(", "),
-    },
-  ];
 
   return (
     <div style={{ padding: "20px" }}>
