@@ -131,7 +131,7 @@ const Page3Exacto = () => {
 
   return (
     <div style={{ padding: "20px" }}>
-      <Title level={2}>Problema Knapsack</Title>
+      <Title level={2}>Problema Knapsack Exacto</Title>
 
       <Form layout="inline" onFinish={addItem}>
         <Form.Item

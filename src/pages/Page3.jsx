@@ -90,7 +90,7 @@ const Page3 = () => {
 
   return (
     <div style={{ padding: "20px" }}>
-      <Title level={2}>Problema Knapsack</Title>
+      <Title level={2}>Problema Knapsack Aproximado</Title>
 
       <Form layout="inline" onFinish={addItem}>
         <Form.Item
