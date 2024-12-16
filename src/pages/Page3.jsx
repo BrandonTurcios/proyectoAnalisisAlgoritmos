@@ -163,6 +163,9 @@ const Page3 = () => {
           min={1}
           style={{ width: "200px", marginRight: "10px" }}
         />
+        <Button type="primary" onClick={solveKnapsack} style={{ marginRight: "10px" }}>
+          Resolver
+        </Button>
         <InputNumber
           placeholder="Cantidad de ítems aleatorios"
           value={randomCount}
@@ -176,15 +179,15 @@ const Page3 = () => {
           min={0}
           style={{ width: "200px", marginRight: "10px" }}
         />
+        
+        
         <Button type="primary" onClick={addRandomItems} style={{ marginRight: "10px" }}>
           Agregar Aleatorios
-        </Button>
-        <Button type="primary" onClick={solveKnapsack} style={{ marginRight: "10px" }}>
-          Resolver
         </Button>
         <Button onClick={reset} danger>
           Reset
         </Button>
+        
       </div>
 
       {result && (

@@ -45,7 +45,7 @@ const SubsetSumPage = () => {
 
   return (
     <div style={{ padding: "20px" }}>
-      <Title level={2}>Subset Sum Algorithm Aproximado</Title>
+      <Title level={2}>Subset Sum Aproximado</Title>
       <Input
         placeholder="Enter an array of numbers separated by commas (e.g., -4,-82,16,44)"
         onChange={handleInputChange}

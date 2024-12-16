@@ -6,7 +6,7 @@ const { Title } = Typography;
 
 const SubsetSumPage = () => {
   const [array, setArray] = useState([]);
-  const [targetSum, setTargetSum] = useState(0); // Nuevo estado para la suma objetivo
+  const [targetSum, setTargetSum] = useState(0); 
   const [result, setResult] = useState();
 
   const handleInputChange = (e) => {
@@ -17,7 +17,7 @@ const SubsetSumPage = () => {
 
   const handleRunAlgorithm = () => {
     const inicio = performance.now();
-    const output = isSubsetSum(array, targetSum); // Usa el valor especificado por el usuario
+    const output = isSubsetSum(array, targetSum); 
     const fin = performance.now();
     console.log("El tiempo es: ")
     console.log(fin - inicio);
@@ -27,7 +27,7 @@ const SubsetSumPage = () => {
 
   return (
     <div style={{ padding: "20px" }}>
-      <Title level={2}>Subset Sum Algorithm Exacto</Title>
+      <Title level={2}>Subset Sum Exacto</Title>
       <Input
         placeholder="Enter an array of numbers separated by commas (e.g., -4,-82,16,44)"
         onChange={handleInputChange}
